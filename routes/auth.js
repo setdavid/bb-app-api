@@ -1,5 +1,6 @@
 const express = require('express')
 const bcrypt = require('bcrypt')
+const jwt = require('jsonwebtoken')
 const { USERS } = require('../constants')
 const router = express.Router()
 require('dotenv').config()
@@ -37,7 +38,9 @@ router.get("/login", async (req, res) => {
     } else {
         try {
             if (await bcrypt.compare(password, hashedPassword)) {
-                res.status(200).json({ status: "good" })
+                const user = { username }
+                const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET)
+                res.status(200).json({ access_token: accessToken })
             } else {
                 res.status(401).json(failAuthError)
             }
@@ -47,5 +50,29 @@ router.get("/login", async (req, res) => {
         }
     }
 })
+
+const authenticateAccessToken = (req, res, next) => {
+    const authHeader = req.headers["authorization"]
+    console.log(req.headers)
+    const accessToken = authHeader ? authHeader.split(" ")[1] : null
+
+    if (accessToken == null) {
+        res.status(401).json({ error: "MISSING_ACCESS_TOKEN" })
+    } else {
+        jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
+            if (err) {
+                res.status(403).json({ error: "INVALID_ACCESS_TOKEN" })
+            } else {
+                req.user = user
+                next()
+            }
+        })
+    }
+}
+
+router.get("/test", authenticateAccessToken, async (req, res) => {
+    res.json(req.user)
+})
+
 
 module.exports = router
