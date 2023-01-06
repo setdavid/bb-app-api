@@ -3,7 +3,7 @@ const app = express()
 
 app.use(express.json())
 
-// const accessRouter = require("./routes/access")
+const authRouter = require("./routes/auth")
 
 app.listen(8080)
-// app.use("/access", accessRouter)
+app.use("/auth", authRouter)
