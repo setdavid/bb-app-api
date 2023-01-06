@@ -2,40 +2,41 @@ const express = require('express')
 const bcrypt = require('bcrypt')
 const { USERS } = require('../constants')
 const router = express.Router()
+require('dotenv').config()
 
-//only used to create hashed passwords!
-router.get("/create-user", async (req, res) => {
-    const { username, password } = req.query
+//only used to generate hashed passwords!
+router.get("/generate-hashed-password", async (req, res) => {
+    const { password } = req.query
 
-    if (USERS.find(user => user.username == username)) {
-        res.status(400).json({
-            error: "Username taken"
-        })
-    } else {
-        try {
-            const hashedPassword = await bcrypt.hash(password, 10)
-            console.log(hashedPassword)
-            res.status(200).json({ hashedPassword })
-        } catch (err) {
-            console.log(err);
-            res.status(500).json(err)
-        }
+    try {
+        const hashedPassword = await bcrypt.hash(password, 10)
+        console.log(hashedPassword)
+        res.status(200).json({ hashedPassword })
+    } catch (err) {
+        console.log(err);
+        res.status(500).json(err)
     }
 })
 
 router.get("/login", async (req, res) => {
     const { username, password } = req.query
-    const user = USERS.find(user => user.username == username)
+    let hashedPassword = null;
+
+    if (username == process.env.USERNAME_1) {
+        hashedPassword = process.env.PASSWORD_1
+    } else if (username == process.env.USERNAME_2) {
+        hashedPassword = process.env.PASSWORD_2
+    }
 
     const failAuthError = {
         error: "Username or password does not match"
     }
 
-    if (!user) {
+    if (!hashedPassword) {
         res.status(401).json(failAuthError)
     } else {
         try {
-            if (await bcrypt.compare(password, user.password)) {
+            if (await bcrypt.compare(password, hashedPassword)) {
                 res.status(200).json({ status: "good" })
             } else {
                 res.status(401).json(failAuthError)
