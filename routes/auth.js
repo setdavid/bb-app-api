@@ -55,7 +55,7 @@ router.post("/login", async (req, res) => {
     }
 
     const failAuthError = {
-        error: "Username or password does not match"
+        error: "INCORRECT_USERNAME_OR_PASSWORD"
     }
 
     if (!hashedPassword) {
